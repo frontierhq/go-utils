@@ -1,7 +1,7 @@
-package git
+package external_git
 
 // Push pushes the current branch to the "origin" remote
-func (g *Git) Push(force bool) error {
+func (g *ExternalGit) Push(force bool) error {
 	var args []string
 	if force {
 		args = []string{"push", "-u", "origin", "HEAD"}

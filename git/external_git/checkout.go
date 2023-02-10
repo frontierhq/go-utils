@@ -1,7 +1,7 @@
-package git
+package external_git
 
 // Checkout checks out a branch
-func (g *Git) Checkout(branchName string, create bool) error {
+func (g *ExternalGit) Checkout(branchName string, create bool) error {
 	var args []string
 	if create {
 		args = []string{"checkout", "-b", branchName}

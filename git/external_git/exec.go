@@ -1,4 +1,4 @@
-package git
+package external_git
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 )
 
 // Exec executes git commands in the context of the repository
-func (g *Git) Exec(arg ...string) (string, error) {
+func (g *ExternalGit) Exec(arg ...string) (string, error) {
 	cmd := exec.Command("git", arg...)
 	cmd.Dir = g.repositoryPath
 

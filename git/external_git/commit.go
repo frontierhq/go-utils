@@ -1,7 +1,7 @@
-package git
+package external_git
 
 // Commit commits all staged changes
-func (g *Git) Commit(message string) error {
+func (g *ExternalGit) Commit(message string) error {
 	_, err := g.Exec("commit", "-m", message)
 	if err != nil {
 		return err
