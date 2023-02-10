@@ -6,6 +6,5 @@ type Git interface {
 	CloneOverHttp(url string, username string, password string) error
 	Commit(message string) error
 	GetRepositoryPath() string
-	NewGit(repositoryPath string) *Git
 	Push(force bool) error
 }
