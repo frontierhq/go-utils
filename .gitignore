@@ -2,8 +2,5 @@
 .env
 .vscode
 
-# go
-/sheriff
-
 # other
 dist/
