@@ -14,6 +14,7 @@ import (
 	"github.com/microsoft/azure-devops-go-api/azuredevops/build"
 )
 
+// GetBuild gets a Build
 func (a *AzureDevOps) GetBuild(projectName string, buildId *int) (*build.Build, error) {
 	client, err := build.NewClient(a.ctx, a.connection)
 	if err != nil {
@@ -27,6 +28,7 @@ func (a *AzureDevOps) GetBuild(projectName string, buildId *int) (*build.Build, 
 	return client.GetBuild(a.ctx, getBuildArgs)
 }
 
+// GetBuildDefinitionByName gets a BuildDefinitionReference by name
 func (a *AzureDevOps) GetBuildDefinitionByName(projectName string, name string) (*build.BuildDefinitionReference, error) {
 	client, err := build.NewClient(a.ctx, a.connection)
 	if err != nil {
@@ -62,6 +64,7 @@ type CustomDefinition struct {
 	ID *int `json:"id"`
 }
 
+// QueueBuild queues and returns a new Build
 func (a *AzureDevOps) QueueBuild(projectName string, definitionId *int, sourceBranch string, templateParameters map[string]string, tags []string) (*build.Build, error) {
 	buildClient, err := build.NewClient(a.ctx, a.connection)
 	if err != nil {
@@ -131,6 +134,7 @@ func (a *AzureDevOps) QueueBuild(projectName string, definitionId *int, sourceBr
 	return &queuedBuild, err
 }
 
+// WaitForBuild waits for a Build to complete
 func (a *AzureDevOps) WaitForBuild(projectName string, buildId *int, attempts uint, interval int) (*build.Build, error) {
 	var build *build.Build
 	err := retry.Do(

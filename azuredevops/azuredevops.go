@@ -12,6 +12,7 @@ type AzureDevOps struct {
 	ctx        context.Context
 }
 
+// NewAzureDevOps creates a new AzureDevOps
 func NewAzureDevOps(organisationName string, personalAccessToken string) *AzureDevOps {
 	ctx := context.Background()
 	organisationUrl := fmt.Sprintf("https://dev.azure.com/%s", organisationName)
