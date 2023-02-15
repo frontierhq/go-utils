@@ -19,9 +19,6 @@ func (g *ExternalGit) Exec(arg ...string) (string, error) {
 	// cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
-	if err != nil {
-		return "", err
-	}
 
-	return stdoutBuffer.String(), nil
+	return stdoutBuffer.String(), err
 }

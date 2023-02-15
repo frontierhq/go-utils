@@ -14,9 +14,6 @@ func (g *ExternalGit) CloneOverHttp(url string, username string, password string
 	parsedUrl.User = netUrl.UserPassword(username, password)
 
 	_, err = g.Exec("clone", parsedUrl.String(), g.repositoryPath)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }

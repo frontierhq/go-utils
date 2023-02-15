@@ -10,9 +10,6 @@ func (g *ExternalGit) Checkout(branchName string, create bool) error {
 	}
 
 	_, err := g.Exec(args...)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
