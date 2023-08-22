@@ -1,24 +1,17 @@
 package external_git
 
 import (
-	"bytes"
-	"os/exec"
+	"fmt"
+
+	exec "github.com/frontierdigital/utils/exec"
 )
 
 // Exec executes git commands in the context of the repository
 func (g *ExternalGit) Exec(arg ...string) (string, error) {
-	cmd := exec.Command("git", arg...)
-	cmd.Dir = g.repositoryPath
+	stdout, stderr, exitCode := exec.RunCommand("git", g.repositoryPath, arg...)
+	if exitCode != 0 {
+		return stdout, fmt.Errorf("(%d) %s", exitCode, stderr)
+	}
 
-	stdoutBuffer := new(bytes.Buffer)
-	cmd.Stdout = stdoutBuffer
-	// cmd.Stdout = os.Stdout
-
-	stderrBuffer := new(bytes.Buffer)
-	cmd.Stderr = stderrBuffer
-	// cmd.Stderr = os.Stderr
-
-	err := cmd.Run()
-
-	return stdoutBuffer.String(), err
+	return stdout, nil
 }

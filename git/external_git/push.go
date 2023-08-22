@@ -4,9 +4,9 @@ package external_git
 func (g *ExternalGit) Push(force bool) error {
 	var args []string
 	if force {
-		args = []string{"push", "-u", "origin", "HEAD"}
-	} else {
 		args = []string{"push", "-u", "origin", "HEAD", "--force"}
+	} else {
+		args = []string{"push", "-u", "origin", "HEAD"}
 	}
 
 	_, err := g.Exec(args...)

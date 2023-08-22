@@ -7,9 +7,9 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// GetRepositories gets all GitRepository in a project
+// GetRepositories gets all GitRepository
 func (a *AzureDevOps) GetRepositories(projectName string) (*[]git.GitRepository, error) {
-	gitClient, err := git.NewClient(a.ctx, a.connection)
+	client, err := git.NewClient(a.ctx, a.connection)
 	if err != nil {
 		return nil, err
 	}
@@ -17,11 +17,11 @@ func (a *AzureDevOps) GetRepositories(projectName string) (*[]git.GitRepository,
 	getRepositoriesArgs := git.GetRepositoriesArgs{
 		Project: &projectName,
 	}
-	return gitClient.GetRepositories(a.ctx, getRepositoriesArgs)
+	return client.GetRepositories(a.ctx, getRepositoriesArgs)
 }
 
-// GetRepositoryByName gets a GitRepository by name
-func (a *AzureDevOps) GetRepositoryByName(projectName string, name string) (*git.GitRepository, error) {
+// GetRepository gets a GitRepository
+func (a *AzureDevOps) GetRepository(projectName string, name string) (*git.GitRepository, error) {
 	repositories, err := a.GetRepositories(projectName)
 	if err != nil {
 		return nil, err
