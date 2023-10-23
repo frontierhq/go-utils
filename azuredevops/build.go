@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -112,6 +113,19 @@ func (a *AzureDevOps) QueueBuild(projectName string, definitionId *int, sourceBr
 
 	response, err := client.Send(a.ctx, http.MethodPost, locationId, "5.1", routeValues, queryParams, bytes.NewReader(body), "application/json", "application/json", nil)
 	if err != nil {
+		if _, ok := err.(azuredevops.WrappedError); ok {
+			wrappedError := err.(azuredevops.WrappedError)
+			if *wrappedError.TypeKey == "BuildRequestValidationFailedException" {
+				validationResults := (*wrappedError.CustomProperties)["ValidationResults"]
+				builder := &strings.Builder{}
+				for i, v := range validationResults.([]interface{}) {
+					message := v.(map[string]interface{})["message"]
+					index := i + 1
+					builder.WriteString(fmt.Sprintf("\n%d) %s", index, message))
+				}
+				return nil, fmt.Errorf("%s %s", err.Error(), builder.String())
+			}
+		}
 		return nil, err
 	}
 
@@ -135,13 +149,18 @@ func (a *AzureDevOps) QueueBuild(projectName string, definitionId *int, sourceBr
 }
 
 // WaitForBuild waits for a Build to complete
-func (a *AzureDevOps) WaitForBuild(projectName string, buildId *int, attempts uint, interval int) (*build.Build, error) {
-	var build *build.Build
+func (a *AzureDevOps) WaitForBuild(projectName string, buildId *int, attempts uint, interval int) error {
 	err := retry.Do(
 		func() error {
 			var err error
-			build, err = a.GetBuild(projectName, buildId)
+			build, err := a.GetBuild(projectName, buildId)
 			if err != nil {
+				if _, ok := err.(azuredevops.WrappedError); ok {
+					wrappedError := err.(azuredevops.WrappedError)
+					if *wrappedError.TypeKey == "BuildNotFoundException" {
+						return retry.Unrecoverable(err)
+					}
+				}
 				return err
 			}
 
@@ -160,5 +179,5 @@ func (a *AzureDevOps) WaitForBuild(projectName string, buildId *int, attempts ui
 		retry.LastErrorOnly(true),
 	)
 
-	return build, err
+	return err
 }
