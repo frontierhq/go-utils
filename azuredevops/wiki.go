@@ -5,6 +5,7 @@ import (
 	"github.com/microsoft/azure-devops-go-api/azuredevops/wiki"
 )
 
+// CreateWikiIfNotExists creates a code wiki if it does not exist.
 func (a *AzureDevOps) CreateWikiIfNotExists(projectName string, wikiName string, gitEmail string, gitUsername string, adoPat string) (*string, error) {
 	client, err := wiki.NewClient(a.ctx, a.connection)
 	if err != nil {

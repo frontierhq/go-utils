@@ -4,7 +4,7 @@ import (
 	"github.com/microsoft/azure-devops-go-api/azuredevops/git"
 )
 
-// GetPackageVersion gets all GitRepository
+// GetFileContent gets content in a file over API.
 func (a *AzureDevOps) GetFileContent(projectName string, repoName string, version string) (*git.GitItem, error) {
 	client, err := git.NewClient(a.ctx, a.connection)
 	if err != nil {

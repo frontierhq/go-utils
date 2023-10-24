@@ -77,7 +77,7 @@ func (a *AzureDevOps) CreatePullRequest(projectName string, repositoryName strin
 	return client.CreatePullRequest(a.ctx, createPullRequestArgs)
 }
 
-// CompletePullRequest completes a GitPullRequest
+// SetPullRequestAutoComplete completes a GitPullRequest
 func (a *AzureDevOps) SetPullRequestAutoComplete(projectName string, repositoryName string, pullRequestId int, userId *uuid.UUID) error {
 	client, err := git.NewClient(a.ctx, a.connection)
 	if err != nil {
