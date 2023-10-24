@@ -1,7 +1,9 @@
 package azuredevops
 
 import (
+	"github.com/google/uuid"
 	"github.com/microsoft/azure-devops-go-api/azuredevops/git"
+	"github.com/microsoft/azure-devops-go-api/azuredevops/webapi"
 )
 
 // AbandonPullRequest abandons a GitPullRequest
@@ -73,4 +75,32 @@ func (a *AzureDevOps) CreatePullRequest(projectName string, repositoryName strin
 		RepositoryId:           &repositoryName,
 	}
 	return client.CreatePullRequest(a.ctx, createPullRequestArgs)
+}
+
+// SetPullRequestAutoComplete completes a GitPullRequest
+func (a *AzureDevOps) SetPullRequestAutoComplete(projectName string, repositoryName string, pullRequestId int, userId *uuid.UUID) error {
+	client, err := git.NewClient(a.ctx, a.connection)
+	if err != nil {
+		return err
+	}
+
+	id := userId.String()
+	deleteSourceBranch := true
+
+	_, err = client.UpdatePullRequest(a.ctx, git.UpdatePullRequestArgs{
+		Project:       &projectName,
+		PullRequestId: &pullRequestId,
+		RepositoryId:  &repositoryName,
+		GitPullRequestToUpdate: &git.GitPullRequest{
+			AutoCompleteSetBy: &webapi.IdentityRef{
+				Id: &id,
+			},
+			CompletionOptions: &git.GitPullRequestCompletionOptions{
+				DeleteSourceBranch: &deleteSourceBranch,
+				MergeStrategy:      &git.GitPullRequestMergeStrategyValues.Squash,
+			},
+		},
+	})
+
+	return err
 }
