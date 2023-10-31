@@ -53,6 +53,10 @@ func (a *AzureDevOps) FindPullRequest(projectName string, repositoryName string,
 		return nil, err
 	}
 
+	if len(*pullRequests) == 0 {
+		return nil, nil
+	}
+
 	return &(*pullRequests)[0], nil
 }
 
