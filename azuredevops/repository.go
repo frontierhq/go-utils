@@ -3,10 +3,8 @@ package azuredevops
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	egit "github.com/frontierdigital/utils/git/external_git"
-	"github.com/frontierdigital/utils/output"
 	"github.com/microsoft/azure-devops-go-api/azuredevops/git"
 	"golang.org/x/exp/slices"
 )
@@ -41,24 +39,11 @@ func (a *AzureDevOps) GetRepository(projectName string, name string) (*git.GitRe
 	return &(*repositories)[repositoryIdx], nil
 }
 
-// configureRepository configures a repository
-func configureRepository(repo *egit.ExternalGit, gitEmail string, gitUsername string) error {
-	err := repo.SetConfig("user.email", gitEmail)
-	if err != nil {
-		return err
-	}
-	err = repo.SetConfig("user.name", gitUsername)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // createRepositoryIfNotExists creates a repository if it does not exist
-func createRepositoryIfNotExists(a *AzureDevOps, projectName string, repoName string, gitEmail string, gitUsername string, adoPat string) (*git.GitRepository, *string, error) {
+func (a *AzureDevOps) createRepositoryIfNotExists(projectName string, repoName string, gitEmail string, gitUsername string) (*git.GitRepository, error) {
 	client, err := git.NewClient(a.ctx, a.connection)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	getRepositoryArgs := git.GetRepositoryArgs{
@@ -67,23 +52,11 @@ func createRepositoryIfNotExists(a *AzureDevOps, projectName string, repoName st
 	}
 
 	r, err := client.GetRepository(a.ctx, getRepositoryArgs)
-
 	if err == nil {
-		repoPath, err := os.MkdirTemp("", "")
-		if err != nil {
-			return nil, nil, err
-		}
-		repo := egit.NewGit(repoPath)
-		err = repo.CloneOverHttp(*r.RemoteUrl, adoPat, "x-oauth-basic")
-		if err != nil {
-			return nil, nil, err
-		}
-		err = configureRepository(repo, gitEmail, gitUsername)
-		if err != nil {
-			return nil, nil, err
-		}
-		return r, &repoPath, nil
+		return r, nil
 	}
+
+	// TODO: Check that err is a GitRepositoryNotFound error
 
 	createRepositoryArgs := git.CreateRepositoryArgs{
 		GitRepositoryToCreate: &git.GitRepositoryCreateOptions{
@@ -93,61 +66,52 @@ func createRepositoryIfNotExists(a *AzureDevOps, projectName string, repoName st
 	}
 
 	r, err = client.CreateRepository(a.ctx, createRepositoryArgs)
-
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	localPath, err := initRepository("frontierdigital", projectName, repoName, gitEmail, gitUsername, adoPat)
-
+	err = a.initRepository(*r.RemoteUrl, gitEmail, gitUsername)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return r, localPath, nil
+	return r, nil
 }
 
 // initRepository creates a main branch
-func initRepository(organisationName string, projectName string, repoName string, gitEmail string, gitUsername string, adoPat string) (*string, error) {
-	repoUrl := fmt.Sprintf("https://dev.azure.com/%s/%s/_git/%s", organisationName, projectName, repoName)
-
-	repoPath, err := os.MkdirTemp("", "")
+func (a *AzureDevOps) initRepository(remoteUrl string, gitEmail string, gitUsername string) error {
+	pat, err := a.GetPAT()
 	if err != nil {
-		return nil, err
-	}
-	repo := egit.NewGit(repoPath)
-	err = repo.CloneOverHttp(repoUrl, adoPat, "x-oauth-basic")
-	if err != nil {
-		return nil, err
-	}
-	err = configureRepository(repo, gitEmail, gitUsername)
-	if err != nil {
-		return nil, err
+		return err
 	}
 
-	file, err := os.Create(filepath.Join(repoPath, "README.md"))
+	repo, err := egit.NewClonedGit(remoteUrl, "x-oauth-basic", *pat, gitEmail, gitUsername)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	defer os.RemoveAll(repo.GetRepositoryPath())
+
+	file, err := os.Create(repo.GetFilePath("README.md"))
+	if err != nil {
+		return err
 	}
 	defer file.Close()
 
 	err = repo.AddAll()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	commitMessage := "Initial Commit"
+	commitMessage := "Initial commit."
 	_, err = repo.Commit(commitMessage)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = repo.Push(false)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	output.PrintlnfInfo("Pushed.")
-
-	return &repoPath, nil
+	return nil
 }

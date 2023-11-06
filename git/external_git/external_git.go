@@ -1,6 +1,9 @@
 package external_git
 
-import "path/filepath"
+import (
+	"os"
+	"path/filepath"
+)
 
 type ExternalGit struct {
 	repositoryPath string
@@ -21,4 +24,33 @@ func NewGit(repositoryPath string) *ExternalGit {
 	return &ExternalGit{
 		repositoryPath: repositoryPath,
 	}
+}
+
+// NewClonedGit creates a new ExternalGit from a clone
+func NewClonedGit(remoteUrl string, remoteUsername string, remotePassword string, gitEmail string, gitUsername string) (*ExternalGit, error) {
+	repositoryPath, err := os.MkdirTemp("", "")
+	if err != nil {
+		return nil, err
+	}
+
+	git := NewGit(repositoryPath)
+
+	err = git.CloneOverHttp(remoteUrl, remoteUsername, remotePassword)
+	if err != nil {
+		return nil, err
+	}
+
+	err = git.SetConfig("user.email", gitEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	err = git.SetConfig("user.name", gitUsername)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ExternalGit{
+		repositoryPath: repositoryPath,
+	}, nil
 }
