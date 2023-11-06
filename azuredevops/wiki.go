@@ -6,7 +6,7 @@ import (
 )
 
 // CreateWikiIfNotExists creates a code wiki if it does not exist.
-func (a *AzureDevOps) CreateWikiIfNotExists(projectName string, wikiName string, gitEmail string, gitUsername string, adoPat string) (*string, error) {
+func (a *AzureDevOps) CreateWikiIfNotExists(projectName string, wikiName string, gitEmail string, gitUsername string) (*string, error) {
 	client, err := wiki.NewClient(a.ctx, a.connection)
 	if err != nil {
 		return nil, err
@@ -17,7 +17,7 @@ func (a *AzureDevOps) CreateWikiIfNotExists(projectName string, wikiName string,
 		WikiIdentifier: &wikiName,
 	}
 
-	r, localPath, err := createRepositoryIfNotExists(a, projectName, wikiName, gitEmail, gitUsername, adoPat)
+	r, localPath, err := a.createRepositoryIfNotExists(projectName, wikiName, gitEmail, gitUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -27,6 +27,8 @@ func (a *AzureDevOps) CreateWikiIfNotExists(projectName string, wikiName string,
 	if err == nil {
 		return localPath, nil
 	}
+
+	// TODO: Check that this is a WikiNotFoundError
 
 	projectId, err := a.getProjectUUID(projectName)
 	if err != nil {

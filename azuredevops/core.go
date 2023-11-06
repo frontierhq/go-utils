@@ -20,7 +20,7 @@ func (a *AzureDevOps) getProjectUUID(projectName string) (*uuid.UUID, error) {
 		return nil, err
 	}
 
-	for _, project := range *&projects.Value {
+	for _, project := range projects.Value {
 		if *project.Name == projectName {
 			return project.Id, nil
 		}
