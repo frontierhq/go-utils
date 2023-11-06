@@ -1,5 +1,9 @@
 # Utils Changelog
 
+## v.0.0.7
+
+* Allowed configuring of filename in `GetFileContent` in `azuredevops`.
+
 ## v0.0.6
 
 * Added `HasChanges` to `external_git`.
