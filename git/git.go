@@ -9,6 +9,7 @@ type Git interface {
 	Configure(gitEmail string, gitUsername string) error
 	GetFilePath(filePath string) string
 	GetRepositoryPath() string
+	HasChanges() (bool, error)
 	Push(force bool) error
 	SetConfig(key string, value string) error
 }

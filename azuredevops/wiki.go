@@ -6,10 +6,10 @@ import (
 )
 
 // CreateWikiIfNotExists creates a code wiki if it does not exist.
-func (a *AzureDevOps) CreateWikiIfNotExists(projectName string, wikiName string, gitEmail string, gitUsername string) (*wiki.WikiV2, *git.GitRepository, *string, error) {
+func (a *AzureDevOps) CreateWikiIfNotExists(projectName string, wikiName string, gitEmail string, gitUsername string) (*wiki.WikiV2, *git.GitRepository, error) {
 	client, err := wiki.NewClient(a.ctx, a.connection)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	getWikiArgs := wiki.GetWikiArgs{
@@ -17,22 +17,22 @@ func (a *AzureDevOps) CreateWikiIfNotExists(projectName string, wikiName string,
 		WikiIdentifier: &wikiName,
 	}
 
-	r, localPath, err := a.createRepositoryIfNotExists(projectName, wikiName, gitEmail, gitUsername)
+	r, err := a.createRepositoryIfNotExists(projectName, wikiName, gitEmail, gitUsername)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	w, err := client.GetWiki(a.ctx, getWikiArgs)
 
 	if err == nil {
-		return w, r, localPath, nil
+		return w, r, nil
 	}
 
 	// TODO: Check that this is a WikiNotFoundError
 
 	projectId, err := a.getProjectUUID(projectName)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	branch := "main"
@@ -53,8 +53,8 @@ func (a *AzureDevOps) CreateWikiIfNotExists(projectName string, wikiName string,
 	}
 	w, err = client.CreateWiki(a.ctx, wikiCreateArgs)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	return w, r, localPath, nil
+	return w, r, nil
 }

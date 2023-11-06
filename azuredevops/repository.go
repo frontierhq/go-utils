@@ -40,10 +40,10 @@ func (a *AzureDevOps) GetRepository(projectName string, name string) (*git.GitRe
 }
 
 // createRepositoryIfNotExists creates a repository if it does not exist
-func (a *AzureDevOps) createRepositoryIfNotExists(projectName string, repoName string, gitEmail string, gitUsername string) (*git.GitRepository, *string, error) {
+func (a *AzureDevOps) createRepositoryIfNotExists(projectName string, repoName string, gitEmail string, gitUsername string) (*git.GitRepository, error) {
 	client, err := git.NewClient(a.ctx, a.connection)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	getRepositoryArgs := git.GetRepositoryArgs{
@@ -52,14 +52,8 @@ func (a *AzureDevOps) createRepositoryIfNotExists(projectName string, repoName s
 	}
 
 	r, err := client.GetRepository(a.ctx, getRepositoryArgs)
-
 	if err == nil {
-		repoPath, err := a.checkoutAndConfigure(*r.RemoteUrl, gitEmail, gitUsername)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return r, repoPath, nil
+		return r, nil
 	}
 
 	// TODO: Check that err is a GitRepositoryNotFound error
@@ -73,89 +67,63 @@ func (a *AzureDevOps) createRepositoryIfNotExists(projectName string, repoName s
 
 	r, err = client.CreateRepository(a.ctx, createRepositoryArgs)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	repoPath, err := a.initRepository(*r.RemoteUrl, gitEmail, gitUsername)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return r, repoPath, nil
-}
-
-func (a *AzureDevOps) checkoutAndConfigure(remoteUrl string, gitEmail string, gitUsername string) (*string, error) {
-	repoPath, err := os.MkdirTemp("", "")
+	err = a.initRepository(*r.RemoteUrl, gitEmail, gitUsername)
 	if err != nil {
 		return nil, err
 	}
 
-	repo := egit.NewGit(repoPath)
-	pat, err := a.GetPAT()
-	if err != nil {
-		return nil, err
-	}
-
-	err = repo.CloneOverHttp(remoteUrl, *pat, "x-oauth-basic")
-	if err != nil {
-		return nil, err
-	}
-
-	err = repo.Configure(gitEmail, gitUsername)
-	if err != nil {
-		return nil, err
-	}
-
-	repoPath = repo.GetRepositoryPath()
-
-	return &repoPath, nil
+	return r, nil
 }
 
 // initRepository creates a main branch
-func (a *AzureDevOps) initRepository(remoteUrl string, gitEmail string, gitUsername string) (*string, error) {
+func (a *AzureDevOps) initRepository(remoteUrl string, gitEmail string, gitUsername string) error {
 	repoPath, err := os.MkdirTemp("", "")
 	if err != nil {
-		return nil, err
+		return err
 	}
+	defer os.RemoveAll(repoPath)
 
 	repo := egit.NewGit(repoPath)
 
 	pat, err := a.GetPAT()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = repo.CloneOverHttp(remoteUrl, *pat, "x-oauth-basic")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = repo.Configure(gitEmail, gitUsername)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	file, err := os.Create(repo.GetFilePath("README.md"))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
 
 	err = repo.AddAll()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	commitMessage := "Initial commit."
 	_, err = repo.Commit(commitMessage)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = repo.Push(false)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &repoPath, nil
+	return nil
 }
