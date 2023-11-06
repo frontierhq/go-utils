@@ -6,7 +6,6 @@ type Git interface {
 	Checkout(branchName string, create bool) error
 	CloneOverHttp(url string, username string, password string) error
 	Commit(message string) (string, error)
-	Configure(gitEmail string, gitUsername string) error
 	GetFilePath(filePath string) string
 	GetRepositoryPath() string
 	HasChanges() (bool, error)

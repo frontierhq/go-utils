@@ -80,28 +80,16 @@ func (a *AzureDevOps) createRepositoryIfNotExists(projectName string, repoName s
 
 // initRepository creates a main branch
 func (a *AzureDevOps) initRepository(remoteUrl string, gitEmail string, gitUsername string) error {
-	repoPath, err := os.MkdirTemp("", "")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(repoPath)
-
-	repo := egit.NewGit(repoPath)
-
 	pat, err := a.GetPAT()
 	if err != nil {
 		return err
 	}
 
-	err = repo.CloneOverHttp(remoteUrl, *pat, "x-oauth-basic")
+	repo, err := egit.NewClonedGit(remoteUrl, "x-oauth-basic", *pat, gitEmail, gitUsername)
 	if err != nil {
 		return err
 	}
-
-	err = repo.Configure(gitEmail, gitUsername)
-	if err != nil {
-		return err
-	}
+	defer os.RemoveAll(repo.GetRepositoryPath())
 
 	file, err := os.Create(repo.GetFilePath("README.md"))
 	if err != nil {
