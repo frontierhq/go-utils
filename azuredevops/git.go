@@ -5,15 +5,25 @@ import (
 )
 
 // GetFileContent gets content in a file over API.
-func (a *AzureDevOps) GetFileContent(projectName string, repoName string, version string, filepath string) (*git.GitItem, error) {
+func (a *AzureDevOps) GetFileContent(projectName string, repoName string, version string, filepath string, versionType string) (*git.GitItem, error) {
 	client, err := git.NewClient(a.ctx, a.connection)
 	if err != nil {
 		return nil, err
 	}
 
+	var vt git.GitVersionType
+	switch versionType {
+	case "branch":
+		vt = git.GitVersionTypeValues.Branch
+	case "commit":
+		vt = git.GitVersionTypeValues.Commit
+	case "tag":
+		vt = git.GitVersionTypeValues.Tag
+	}
+
 	includeContent := true
 	gitVersionDescriptor := git.GitVersionDescriptor{
-		VersionType: &git.GitVersionTypeValues.Tag,
+		VersionType: &vt,
 		Version:     &version,
 	}
 	getItemArgs := git.GetItemArgs{

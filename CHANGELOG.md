@@ -1,5 +1,9 @@
 # Utils Changelog
 
+## v0.0.8
+
+* Updated `GetFileContent` in `azuredevops` to allow specifying of the version type.
+
 ## v.0.0.7
 
 * Allowed configuring of filename in `GetFileContent` in `azuredevops`.
