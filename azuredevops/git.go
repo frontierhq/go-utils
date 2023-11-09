@@ -1,6 +1,8 @@
 package azuredevops
 
 import (
+	"fmt"
+
 	"github.com/microsoft/azure-devops-go-api/azuredevops/git"
 )
 
@@ -19,6 +21,8 @@ func (a *AzureDevOps) GetFileContent(projectName string, repoName string, versio
 		vt = git.GitVersionTypeValues.Commit
 	case "tag":
 		vt = git.GitVersionTypeValues.Tag
+	default:
+		return nil, fmt.Errorf("unknown version type: %s", versionType)
 	}
 
 	includeContent := true
