@@ -21,8 +21,8 @@ func RunCommand(name string, cwd string, args ...string) (stdout string, stderr 
 
 	if err != nil {
 		// try to get the exit code
-		if exitError, ok := err.(*exec.ExitError); ok {
-			ws := exitError.Sys().(syscall.WaitStatus)
+		if e, ok := err.(*exec.ExitError); ok {
+			ws := e.Sys().(syscall.WaitStatus)
 			exitCode = ws.ExitStatus()
 		} else {
 			// This will happen (in OSX) if `name` is not available in $PATH,

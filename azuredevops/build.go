@@ -15,15 +15,67 @@ import (
 	"github.com/microsoft/azure-devops-go-api/azuredevops/build"
 )
 
+// CreateBuildDefinition creates a new BuildDefinition
+func (a *AzureDevOps) CreateBuildDefinition(projectName string, repositoryId string, folderPath string, definitionName string, yamlFilename string) (*build.BuildDefinition, error) {
+	client, err := build.NewClient(a.ctx, a.connection)
+	if err != nil {
+		return nil, err
+	}
+
+	agentPoolQueueName := "Azure Pipelines"
+	yamlProcessType := 2
+	buildRepositoryDefaultBranch := "refs/heads/main"
+	buildRepositoryType := "tfsgit"
+	triggerBatchChanges := false
+	triggerBranchFilters := []string{}
+	triggerMaxConcurrentBuildsPerBranch := 1
+	triggerPathFilters := []string{}
+	triggerSettingsSourceType := 2
+	var triggers []interface{} // []build.ContinuousIntegrationTrigger # TODO: Why doesn't this work?
+	triggers = append(triggers, build.ContinuousIntegrationTrigger{
+		BatchChanges:                 &triggerBatchChanges,
+		BranchFilters:                &triggerBranchFilters,
+		MaxConcurrentBuildsPerBranch: &triggerMaxConcurrentBuildsPerBranch,
+		PathFilters:                  &triggerPathFilters,
+		SettingsSourceType:           &triggerSettingsSourceType,
+		TriggerType:                  &build.DefinitionTriggerTypeValues.ContinuousIntegration,
+	})
+	createDefinitionArgs := build.CreateDefinitionArgs{
+		Definition: &build.BuildDefinition{
+			Name: &definitionName,
+			Path: &folderPath,
+			Process: &build.YamlProcess{
+				Type:         &yamlProcessType,
+				YamlFilename: &yamlFilename,
+			},
+			Queue: &build.AgentPoolQueue{
+				Name: &agentPoolQueueName,
+			},
+			QueueStatus: &build.DefinitionQueueStatusValues.Enabled,
+			Repository: &build.BuildRepository{
+				Id:            &repositoryId,
+				DefaultBranch: &buildRepositoryDefaultBranch,
+				Properties: &map[string]string{
+					"reportBuildStatus": "true",
+				},
+				Type: &buildRepositoryType,
+			},
+			Triggers: &triggers,
+		},
+		Project: &projectName,
+	}
+	return client.CreateDefinition(a.ctx, createDefinitionArgs)
+}
+
 // GetBuild gets a Build
-func (a *AzureDevOps) GetBuild(projectName string, buildId *int) (*build.Build, error) {
+func (a *AzureDevOps) GetBuild(projectName string, buildId int) (*build.Build, error) {
 	client, err := build.NewClient(a.ctx, a.connection)
 	if err != nil {
 		return nil, err
 	}
 
 	getBuildArgs := build.GetBuildArgs{
-		BuildId: buildId,
+		BuildId: &buildId,
 		Project: &projectName,
 	}
 	return client.GetBuild(a.ctx, getBuildArgs)
@@ -46,7 +98,11 @@ func (a *AzureDevOps) GetBuildDefinitionByName(projectName string, name string) 
 	}
 
 	if len(definitions.Value) == 0 {
-		return nil, fmt.Errorf("build definition with name '%s' not found in project '%s'", name, projectName)
+		// return nil, fmt.Errorf("build definition with name '%s' not found in project '%s'", name, projectName)
+		return nil, &BuildNotFoundError{
+			name:        name,
+			projectName: projectName,
+		}
 	}
 	if len(definitions.Value) > 1 {
 		return nil, fmt.Errorf("multiple build definitions with name '%s' found in project '%s'", name, projectName)
@@ -66,7 +122,7 @@ type CustomDefinition struct {
 }
 
 // QueueBuild queues and returns a new Build
-func (a *AzureDevOps) QueueBuild(projectName string, definitionId *int, sourceBranch string, templateParameters map[string]string, tags []string) (*build.Build, error) {
+func (a *AzureDevOps) QueueBuild(projectName string, definitionId int, sourceBranch string, templateParameters map[string]string, tags []string) (*build.Build, error) {
 	buildClient, err := build.NewClient(a.ctx, a.connection)
 	if err != nil {
 		return nil, err
@@ -92,7 +148,7 @@ func (a *AzureDevOps) QueueBuild(projectName string, definitionId *int, sourceBr
 
 	queueBuildArgs := &CustomQueueBuildArgs{
 		Definition: CustomDefinition{
-			ID: definitionId,
+			ID: &definitionId,
 		},
 		SourceBranch:       sourceBranch,
 		TemplateParameters: templateParameters,
@@ -113,10 +169,9 @@ func (a *AzureDevOps) QueueBuild(projectName string, definitionId *int, sourceBr
 
 	response, err := client.Send(a.ctx, http.MethodPost, locationId, "5.1", routeValues, queryParams, bytes.NewReader(body), "application/json", "application/json", nil)
 	if err != nil {
-		if _, ok := err.(azuredevops.WrappedError); ok {
-			wrappedError := err.(azuredevops.WrappedError)
-			if *wrappedError.TypeKey == "BuildRequestValidationFailedException" {
-				validationResults := (*wrappedError.CustomProperties)["ValidationResults"]
+		if e, ok := err.(azuredevops.WrappedError); ok {
+			if *e.TypeKey == "BuildRequestValidationFailedException" {
+				validationResults := (*e.CustomProperties)["ValidationResults"]
 				builder := &strings.Builder{}
 				for i, v := range validationResults.([]interface{}) {
 					message := v.(map[string]interface{})["message"]
@@ -149,15 +204,14 @@ func (a *AzureDevOps) QueueBuild(projectName string, definitionId *int, sourceBr
 }
 
 // WaitForBuild waits for a Build to complete
-func (a *AzureDevOps) WaitForBuild(projectName string, buildId *int, attempts uint, interval int) error {
+func (a *AzureDevOps) WaitForBuild(projectName string, buildId int, attempts uint, interval int) error {
 	err := retry.Do(
 		func() error {
 			var err error
 			build, err := a.GetBuild(projectName, buildId)
 			if err != nil {
-				if _, ok := err.(azuredevops.WrappedError); ok {
-					wrappedError := err.(azuredevops.WrappedError)
-					if *wrappedError.TypeKey == "BuildNotFoundException" {
+				if e, ok := err.(azuredevops.WrappedError); ok {
+					if *e.TypeKey == "BuildNotFoundException" {
 						return retry.Unrecoverable(err)
 					}
 				}

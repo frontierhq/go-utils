@@ -9,11 +9,6 @@ import (
 	"github.com/microsoft/azure-devops-go-api/azuredevops"
 )
 
-type AzureDevOps struct {
-	connection *azuredevops.Connection
-	ctx        context.Context
-}
-
 // NewAzureDevOps creates a new AzureDevOps
 func NewAzureDevOps(organisationName string, personalAccessToken string) *AzureDevOps {
 	ctx := context.Background()
