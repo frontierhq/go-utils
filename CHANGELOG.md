@@ -1,5 +1,9 @@
 # Utils Changelog
 
+## v0.0.10
+
+* Refactor Azure DevOps cross-project approach.
+
 ## v0.0.9
 
 * Added support for creating pipelines in Azure DevOps via API.

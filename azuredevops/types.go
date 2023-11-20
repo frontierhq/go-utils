@@ -2,7 +2,6 @@ package azuredevops
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/microsoft/azure-devops-go-api/azuredevops"
 )
@@ -12,11 +11,12 @@ type AzureDevOps struct {
 	ctx        context.Context
 }
 
-type BuildNotFoundError struct {
-	name        string
-	projectName string
+type CustomQueueBuildArgs struct {
+	Definition         CustomDefinition  `json:"definition"`
+	SourceBranch       string            `json:"sourceBranch"`
+	TemplateParameters map[string]string `json:"templateParameters"`
 }
 
-func (b *BuildNotFoundError) Error() string {
-	return fmt.Sprintf("build definition with name '%s' not found in project '%s'", b.name, b.projectName)
+type CustomDefinition struct {
+	ID *int `json:"id"`
 }
