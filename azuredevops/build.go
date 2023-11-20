@@ -16,7 +16,7 @@ import (
 )
 
 // CreateBuildDefinition creates a new BuildDefinition
-func (a *AzureDevOps) CreateBuildDefinition(projectName string, repositoryId string, folderPath string, definitionName string, yamlFilename string) (*build.BuildDefinition, error) {
+func (a *AzureDevOps) CreateBuildDefinition(projectName string, definitionName string, repositoryId string, folderPath string, yamlFilename string) (*build.BuildDefinition, error) {
 	client, err := build.NewClient(a.ctx, a.connection)
 	if err != nil {
 		return nil, err
@@ -82,14 +82,14 @@ func (a *AzureDevOps) GetBuild(projectName string, buildId int) (*build.Build, e
 }
 
 // GetBuildDefinitionByName gets a BuildDefinitionReference by name
-func (a *AzureDevOps) GetBuildDefinitionByName(projectName string, name string) (*build.BuildDefinitionReference, error) {
+func (a *AzureDevOps) GetBuildDefinitionByName(projectName string, definitionName string) (*build.BuildDefinition, error) {
 	client, err := build.NewClient(a.ctx, a.connection)
 	if err != nil {
 		return nil, err
 	}
 
 	getDefinitionsArgs := build.GetDefinitionsArgs{
-		Name:    &name,
+		Name:    &definitionName,
 		Project: &projectName,
 	}
 	definitions, err := client.GetDefinitions(a.ctx, getDefinitionsArgs)
@@ -98,27 +98,44 @@ func (a *AzureDevOps) GetBuildDefinitionByName(projectName string, name string) 
 	}
 
 	if len(definitions.Value) == 0 {
-		// return nil, fmt.Errorf("build definition with name '%s' not found in project '%s'", name, projectName)
-		return nil, &BuildNotFoundError{
-			name:        name,
-			projectName: projectName,
-		}
+		return nil, fmt.Errorf("build definition with name '%s' not found in project '%s'", definitionName, projectName)
 	}
 	if len(definitions.Value) > 1 {
-		return nil, fmt.Errorf("multiple build definitions with name '%s' found in project '%s'", name, projectName)
+		return nil, fmt.Errorf("multiple build definitions with name '%s' found in project '%s'", definitionName, projectName)
 	}
 
-	return &definitions.Value[0], nil
+	getDefinitionArgs := build.GetDefinitionArgs{
+		DefinitionId: definitions.Value[0].Id,
+		Project:      &projectName,
+	}
+	return client.GetDefinition(a.ctx, getDefinitionArgs)
 }
 
-type CustomQueueBuildArgs struct {
-	Definition         CustomDefinition  `json:"definition"`
-	SourceBranch       string            `json:"sourceBranch"`
-	TemplateParameters map[string]string `json:"templateParameters"`
-}
+// GetOrCreateBuildDefinition gets or creates a build definition
+func (a *AzureDevOps) GetOrCreateBuildDefinition(projectName string, definitionName string, repositoryId string, folderPath string, yamlFilename string) (*build.BuildDefinition, error) {
+	client, err := build.NewClient(a.ctx, a.connection)
+	if err != nil {
+		return nil, err
+	}
 
-type CustomDefinition struct {
-	ID *int `json:"id"`
+	getDefinitionsArgs := build.GetDefinitionsArgs{
+		Name:    &definitionName,
+		Project: &projectName,
+	}
+	definitions, err := client.GetDefinitions(a.ctx, getDefinitionsArgs)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(definitions.Value) > 1 {
+		return nil, fmt.Errorf("multiple build definitions with name '%s' found in project '%s'", definitionName, projectName)
+	}
+
+	if len(definitions.Value) == 0 {
+		return a.CreateBuildDefinition(projectName, definitionName, repositoryId, folderPath, yamlFilename)
+	} else {
+		return a.GetBuildDefinitionByName(projectName, definitionName)
+	}
 }
 
 // QueueBuild queues and returns a new Build
