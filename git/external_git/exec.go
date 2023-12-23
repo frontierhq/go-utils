@@ -3,7 +3,7 @@ package external_git
 import (
 	"fmt"
 
-	exec "github.com/frontierdigital/utils/exec"
+	exec "github.com/gofrontier-com/go-utils/exec"
 )
 
 // Exec executes git commands in the context of the repository

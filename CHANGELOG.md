@@ -1,4 +1,4 @@
-# Utils Changelog
+# Changelog
 
 ## v0.0.10
 
