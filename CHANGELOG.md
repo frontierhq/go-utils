@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.0
+
+* Renamed from `utils` to `go-utils`.
+
 ## v0.0.10
 
 * Refactor Azure DevOps cross-project approach.
