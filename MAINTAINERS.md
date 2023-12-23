@@ -1,6 +1,4 @@
-# Utils Maintainers
-
-## Maintainers
+# Maintainers
 
 | Maintainer | GitHub ID | Affiliation |
 | --------------- | --------- | ----------- |

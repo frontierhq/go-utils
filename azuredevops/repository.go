@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	egit "github.com/frontierdigital/utils/git/external_git"
+	egit "github.com/gofrontier-com/go-utils/git/external_git"
 	"github.com/microsoft/azure-devops-go-api/azuredevops/git"
 	"golang.org/x/exp/slices"
 )

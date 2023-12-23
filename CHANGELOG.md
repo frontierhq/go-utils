@@ -1,4 +1,8 @@
-# Utils Changelog
+# Changelog
+
+## v0.1.0
+
+* Renamed from `utils` to `go-utils`.
 
 ## v0.0.10
 
