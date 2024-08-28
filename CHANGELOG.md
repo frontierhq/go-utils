@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.0
+* Added `PtrTo` function for creating a pointer to any type
+* Added `ConvertAll` function for safely converting all types of a slice to another where compatible
+
 ## v0.1.0
 
 * Renamed from `utils` to `go-utils`.
