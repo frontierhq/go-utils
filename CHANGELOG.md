@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.0
+
+* Updated module name from `github.com/gofrontier-com/go-utils` to `github.com/frontierhq/go-utils` to reflect GitHub org rename.
+
 ## v0.2.0
 * Added `PtrTo` function for creating a pointer to any type
 * Added `ConvertAll` function for safely converting all types of a slice to another where compatible
