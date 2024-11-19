@@ -1,4 +1,4 @@
-module github.com/gofrontier-com/go-utils
+module github.com/frontierhq/go-utils
 
 go 1.20
 
