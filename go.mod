@@ -1,6 +1,6 @@
-module github.com/gofrontier-com/go-utils
+module github.com/frontierhq/go-utils
 
-go 1.20
+go 1.21
 
 require (
 	github.com/avast/retry-go v3.0.0+incompatible
